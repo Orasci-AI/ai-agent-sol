@@ -1,6 +1,6 @@
 // src/controllers/walletController.ts
 import { Request, Response } from 'express';
-import { WalletService } from '../services/WalletService';
+import { WalletService } from '../services/walletService';
 
 export class WalletController {
     static async generateWallet(req: Request, res: Response) {
