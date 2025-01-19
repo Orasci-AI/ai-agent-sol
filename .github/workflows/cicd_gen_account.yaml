@@ -42,7 +42,7 @@ jobs:
           context: service-gen-account
           tags: ${{ steps.login-ecr.outputs.registry }}/${{env.IMAGE}}:${{steps.vars.outputs.tag}}
           push: true
-          file: Dockerfile
+          file: service-gen-account/Dockerfile
 
       - name: Checkout to pluton-infra
         uses: actions/checkout@v4
