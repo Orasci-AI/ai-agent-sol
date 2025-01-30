@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/go-rod/rod"
@@ -80,7 +79,7 @@ func (c *TradingViewClient) NavigateToChart(symbol string) error {
 	return nil
 }
 
-func (c *TradingViewClient) CaptureTimeframes(timeframes []string) (map[string][]byte, error) {
+func (c *TradingViewClient) CaptureTimeframes(timeframes []string) ([]string, error) {
 	totalTasks := len(timeframes)
 	results := make(chan CaptureResult, totalTasks)
 	errors := make(chan error, totalTasks)
@@ -105,13 +104,13 @@ func (c *TradingViewClient) CaptureTimeframes(timeframes []string) (map[string][
 		progress <- 1
 	}
 
-	screenshots, err := processResults(results, errors, totalTasks)
+	filePaths, err := processResults(results, errors, totalTasks)
 
 	close(results)
 	close(errors)
 	close(progress)
 
-	return screenshots, err
+	return filePaths, err
 }
 
 func trackProgress(progress chan int, totalTasks int) {
@@ -123,23 +122,26 @@ func trackProgress(progress chan int, totalTasks int) {
 	}
 }
 
-func processResults(results chan CaptureResult, errors chan error, totalTasks int) (map[string][]byte, error) {
-	screenshots := make(map[string][]byte)
+func processResults(results chan CaptureResult, errors chan error, totalTasks int) ([]string, error) {
 	successCount := 0
 	failCount := 0
+
+	var filePaths []string
 
 	for i := 0; i < totalTasks; i++ {
 		select {
 		case result := <-results:
 			filename := fmt.Sprintf("tradingview_chart_%s.png", result.Timeframe)
-			if err := os.WriteFile(filename, result.Screenshot, 0644); err != nil {
-				log.Printf("[Error] Failed to save file %s: %v", filename, err)
+			if filePath, err := storage.UploadFileFromBytes(context.Background(), result.Screenshot, filename); err != nil {
+				log.Printf("[Error] Failed to upload file %s: %v", filename, err)
 				failCount++
 			} else {
-				log.Printf("[Success] Saved screenshot: %s", filename)
+				log.Printf("[Success] Upload screenshot: %s", filePath)
 				successCount++
-				screenshots[result.Timeframe] = result.Screenshot
+				filePaths = append(filePaths, filePath)
+
 			}
+
 		case err := <-errors:
 			log.Printf("[Error] %v", err)
 			failCount++
@@ -149,9 +151,9 @@ func processResults(results chan CaptureResult, errors chan error, totalTasks in
 	log.Printf("[Complete] Tasks finished. Success: %d, Failed: %d", successCount, failCount)
 
 	if failCount > 0 {
-		return screenshots, fmt.Errorf("%d captures failed", failCount)
+		return filePaths, fmt.Errorf("%d captures failed", failCount)
 	}
-	return screenshots, nil
+	return filePaths, nil
 }
 
 type CaptureResult struct {

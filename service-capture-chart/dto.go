@@ -6,6 +6,6 @@ type CaptureRequest struct {
 }
 
 type CaptureResponse struct {
-	Screenshots map[string][]byte `json:"screenshots"`
-	Error       string            `json:"error,omitempty"`
+	Screenshots []string `json:"screenshots"`
+	Error       string   `json:"error,omitempty"`
 }

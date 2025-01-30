@@ -18,7 +18,7 @@ func CaptureHandler(c *gin.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(15*len(req.Timeframes))*time.Second)
 	defer cancel()
 
 	client, err := NewTradingViewClient(ctx)
@@ -37,11 +37,11 @@ func CaptureHandler(c *gin.Context) {
 		return
 	}
 
-	screenshots, err := client.CaptureTimeframes(req.Timeframes)
+	filePaths, err := client.CaptureTimeframes(req.Timeframes)
 	if err != nil {
-		if len(screenshots) > 0 {
+		if len(filePaths) > 0 {
 			c.JSON(http.StatusPartialContent, CaptureResponse{
-				Screenshots: screenshots,
+				Screenshots: filePaths,
 				Error:       fmt.Sprintf("Some captures failed: %v", err),
 			})
 			return
@@ -54,6 +54,7 @@ func CaptureHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, CaptureResponse{
-		Screenshots: screenshots,
+		Screenshots: filePaths,
 	})
+	return
 }
