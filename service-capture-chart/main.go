@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 )
 
 var storage *S3Storage
@@ -20,11 +20,12 @@ type Config struct {
 
 // LoadConfig loads environment variables from .env file
 func LoadConfig() (*Config, error) {
+	// ! Remove these lines to work with Kubernetes secrets instead of .env files
 	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error loading .env file: %w", err)
+	// }
 
 	config := &Config{
 		Region:     os.Getenv("Region"),
