@@ -55,12 +55,6 @@ func NewTradingViewClient(ctx context.Context) (*TradingViewClient, error) {
 }
 
 func (c *TradingViewClient) Close() {
-	if c.page != nil {
-		c.page.MustClose()
-	}
-	if c.browser != nil {
-		c.browser.MustClose()
-	}
 }
 func (c *TradingViewClient) NavigateToChart(symbol string) error {
 	baseURL := fmt.Sprintf("https://www.tradingview.com/chart/?symbol=%s", symbol)
