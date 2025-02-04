@@ -28,25 +28,17 @@ func CaptureHandler(c *gin.Context) {
 		})
 		return
 	}
-	defer client.Close()
 
-	if err := client.NavigateToChart(req.Symbol); err != nil {
+	mChartUrl, err := client.TradingViewCaptureChartWithTimeframes(req.Symbol, req.Timeframes)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, CaptureResponse{
-			Error: fmt.Sprintf("Failed to navigate to chart: %v", err),
+			Error: fmt.Sprintf("Failed to capture charts: %v", err),
 		})
 		return
 	}
 
-	filePaths, err := client.CaptureTimeframes(req.Timeframes)
+	filePaths, err := handleUploadCaptureS3(req.Symbol, mChartUrl)
 	if err != nil {
-		if len(filePaths) > 0 {
-			c.JSON(http.StatusPartialContent, CaptureResponse{
-				Screenshots: filePaths,
-				Error:       fmt.Sprintf("Some captures failed: %v", err),
-			})
-			return
-		}
-
 		c.JSON(http.StatusInternalServerError, CaptureResponse{
 			Error: fmt.Sprintf("Failed to capture charts: %v", err),
 		})
@@ -56,5 +48,17 @@ func CaptureHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, CaptureResponse{
 		Screenshots: filePaths,
 	})
-	return
+}
+
+func handleUploadCaptureS3(symbol string, mCharUrl map[string][]byte) ([]string, error) {
+	resUrl := []string{}
+	for chart, pic := range mCharUrl {
+		filename := fmt.Sprintf("%s_%s.png", symbol, chart)
+		url, err := storage.UploadFileFromBytes(context.Background(), pic, filename)
+		if err != nil {
+			return resUrl, err
+		}
+		resUrl = append(resUrl, url)
+	}
+	return resUrl, nil
 }
