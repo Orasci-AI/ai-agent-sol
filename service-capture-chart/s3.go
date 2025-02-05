@@ -51,9 +51,10 @@ func (s *S3Storage) UploadFileFromBytes(ctx context.Context, fileBytes []byte, f
 
 func (s *S3Storage) UploadFile(ctx context.Context, file io.Reader, filename string) (string, error) {
 	input := &s3.PutObjectInput{
-		Bucket: aws.String(s.bucketName),
-		Key:    aws.String(filepath.Clean(filename)),
-		Body:   file,
+		Bucket:      aws.String(s.bucketName),
+		Key:         aws.String(filepath.Clean(filename)),
+		Body:        file,
+		ContentType: aws.String("image/png"),
 	}
 
 	_, err := s.client.PutObject(ctx, input)
